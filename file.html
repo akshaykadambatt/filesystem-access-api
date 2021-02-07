@@ -1,0 +1,204 @@
+<html>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs=" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js" integrity="sha384-LtrjvnR4Twt/qOuYxE721u19sVFLVSA4hf/rRt6PrZTmiPltdZcI7q7PXQBYTKyf" crossorigin="anonymous"></script>
+<style>*,#search{
+  box-shadow:0 0 0px 1px rgba(255,255,255,.3);
+  color:#fff;transition:all 1s;}
+#code{height:90vh;overflow:hidden;background:#000;position: absolute;
+    right: 10px;
+    top: 10px;opacity:12;
+    background: #01004c;
+    padding: 13px;
+    font-size: 38px;}
+#search{border-radius:10px;}
+#divimg{height:70px;}
+</style>
+<body style='background:#000;'>
+
+  <button class='btn btn-dark m-3' id="yo">getFile</button>
+  <button class='btn btn-dark m-3' id="butDirectory">getDir</button>
+  <textarea class='container form-control m-3 container' style='display:none;width:94vw;' id='txt'></textarea>
+  <code><textarea id='code' class='code'></textarea></code>
+  <img id='image'></img>
+  <div class='container-fluid' id='container'>
+  <div id='div' style='position:relative;z-index:10;    display: flex;
+    flex-flow: wrap;
+    justify-content: space-between;'></div></div>
+  <img src='' id='great-image'></img>
+
+
+  <input autofocus class="form-control w-75 m-3 bg-dark" id="search" placeholder="Lookup">
+    <div class='search' id='searchdiv'></div>
+
+<script type="text/javascript" >
+  var globalDirHandle;
+  document.getElementById('search').addEventListener('input', function updateValue(e) {
+    document.getElementById('searchdiv').innerHTML= event.target.value;
+  });
+
+
+
+
+  let fileHandle;
+  textArea = document.getElementById("txt");
+  document.getElementById("yo").addEventListener('click', async () => {
+    [fileHandle] = await window.showOpenFilePicker();
+    const file = await fileHandle.getFile();
+    const contents = await file.text();
+    textArea.value = contents;
+  });
+  var i=1;
+  const butDir = document.getElementById('butDirectory');
+  butDir.addEventListener('click', () => funfun());
+  const funfun = async () => {
+    const dirHandle = await window.showDirectoryPicker();
+    //console.log(dirHandle);
+    globalDirHandle = dirHandle;
+    //document.getElementById('code').innerHTML += dirHandle;
+    await dirHandler(dirHandle);
+  }
+  async function dirHandler(dirHandle) {
+    for await (const entry of dirHandle.values()) {
+      //document.getElementById('code').innerHTML += '<br>' + entry.kind + ' ' + entry.name;
+      if (entry.kind != "directory") {
+        var temp = entry.name.split('.').pop();
+        var formats = ["jpg", "png", "gif"];
+        if (formats.includes(temp)) {
+          //console.log(true);
+          //document.getElementById('code').innerHTML += '<br>.' + temp + ' ' + true;
+          const fileHandle = await dirHandle.getFileHandle(entry.name, {});
+          const file = await fileHandle.getFile();
+          //const contents = await file.text();
+          //const src = URL.createObjectURL(file);
+          //var urlCreator = window.URL || window.webkitURL;
+          //var imageUrl = urlCreator.createObjectURL(file);
+          //var pp = '<img style="width:200px;" class="container" src="' + imageUrl + '"></img>';
+          const yo = await resize(100, file, function (dat) {
+            document.getElementById('div').innerHTML += '<img id="divimg" src="' + dat + '"></img>';
+          });
+        } else {
+          //console.log(false);
+          //document.getElementById('code').innerHTML += '<br>.' + temp + ' ' + false;
+          document.getElementById('code').innerHTML = i;
+          i++;
+        }
+      } else if (entry.kind = "directory") {
+        await dirHandler(entry);
+      }
+    }
+  }
+
+  async function resize(max, img, cb) {
+    var reader = new FileReader();
+    reader.onload = function (event) {
+      var img = new Image();
+      img.onload = function () {
+        if (img.width > max) {
+          var oc = document.createElement('canvas'),
+            octx = oc.getContext('2d');
+          oc.width = img.width;
+          oc.height = img.height;
+          octx.drawImage(img, 0, 0);
+          if (img.width > img.height) {
+            oc.height = (img.height / img.width) * max;
+            oc.width = max;
+          } else {
+            oc.width = (img.width / img.height) * max;
+            oc.height = max;
+          }
+          octx.drawImage(oc, 0, 0, oc.width, oc.height);
+          octx.drawImage(img, 0, 0, oc.width, oc.height);
+          data = oc.toDataURL();
+        } else {
+          data = oc.toDataURL();
+        }
+        cb(data);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(img);
+  }
+
+
+</script>
+
+</body>
+
+</html>
+
+<!--
+<script type="text/javascript" >
+let fileHandle;
+textArea = document.getElementById("txt");
+document.getElementById("yo").addEventListener('click', async () => {
+  [fileHandle] = await window.showOpenFilePicker();
+  const file = await fileHandle.getFile();
+  const contents = await file.text();
+  textArea.value = contents;
+});
+
+const butDir = document.getElementById('butDirectory');
+butDir.addEventListener('click', () => funfun());
+const funfun = async () => {
+  const dirHandle = await window.showDirectoryPicker();
+  console.log(dirHandle);
+  document.getElementById('code').innerHTML+=dirHandle;
+  await dirHandler(dirHandle);
+}
+async function dirHandler(dirHandle){
+for await (const entry of dirHandle.values()) {
+  document.getElementById('code').innerHTML+='<br>'+entry.kind+' '+entry.name;
+    if (entry.kind != "directory") {
+      var temp = entry.name.split('.').pop();
+      var formats = ["jpg","png","gif"]
+      if (formats.includes(temp)){console.log(true);document.getElementById('code').innerHTML+='<br>.'+temp+' '+true;
+      const fileHandle = await dirHandle.getFileHandle(entry.name, {});
+      const file = await fileHandle.getFile();
+      //const contents = await file.text();
+      //const src = URL.createObjectURL(file);
+      //var urlCreator = window.URL || window.webkitURL;
+      //var imageUrl = urlCreator.createObjectURL(file);
+      //var pp = '<img style="width:200px;" class="container" src="' + imageUrl + '"></img>';
+      const yo = await resize(200,file,function(dat) {
+      document.getElementById('div').innerHTML += '<img style="width:200px;" class="container" src="' + dat + '"></img>';
+  });
+      }else{console.log(false);document.getElementById('code').innerHTML+='<br>.'+temp+' '+false;}
+    } else if(entry.kind = "directory"){await dirHandler(entry);}
+  }
+}
+
+async function resize(max,img,cb){
+    var reader = new FileReader();
+    reader.onload = function(event) {
+      var img = new Image();
+      img.onload = function() {
+        if (img.width > max) {
+          var oc = document.createElement('canvas'), octx = oc.getContext('2d');
+          oc.width = img.width;
+          oc.height = img.height;
+          octx.drawImage(img, 0, 0);
+          if( img.width > img.height) {
+            oc.height = (img.height / img.width) * max;
+            oc.width = max;
+          } else {
+            oc.width = (img.width / img.height) * max;
+            oc.height = max;
+          }
+          octx.drawImage(oc, 0, 0, oc.width, oc.height);          
+          octx.drawImage(img, 0, 0, oc.width, oc.height);
+          data = oc.toDataURL();
+        } else {
+          data = oc.toDataURL();
+        }
+        cb(data);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(img);
+  }
+
+
+</script>
+-->
